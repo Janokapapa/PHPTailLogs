@@ -1,0 +1,16 @@
+{
+  "nodeName": "myserver1",
+  "logStreams": {
+    "web": [
+      ".../access.log",
+      ".../error.log"
+    ],
+    "php": [
+      ".../common_php.log"
+    ],
+    "debug_log": [
+      ".../log.txt"
+    ]
+  }
+}
+

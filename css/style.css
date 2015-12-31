@@ -1,0 +1,80 @@
+/* latin-ext */
+@font-face {
+  font-family: 'Inconsolata';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Inconsolata'), url(/css/inconsolata.woff2) format('woff2');
+  unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;
+}
+
+body {
+    background: #000000;
+    color: #55ff55;
+    font-family: 'Inconsolata', monospace;
+    font-size: 14px;
+}
+
+#grepKeyword, #settings { 
+    font-size: 80%; 
+}
+
+.float {
+    background: #000000;
+    border-bottom: 1px solid #888888; 
+    padding: 10px 0 10px 0; 
+    margin: 0px;  
+    height: 30px;
+    width: 100%; 
+    text-align: left;
+    font-size: 16px;
+}
+
+.results {
+    padding-bottom: 20px;
+}
+
+button, input {
+    background: #ffffff;
+    border: none;
+    color: #000000;
+    font-family: 'Inconsolata', monospace;
+    float: left;
+    
+}
+
+label input {
+    float: none;
+}
+
+label {
+    display: block;
+    float: left;
+    padding-left: 15px;
+    text-indent: -15px;
+    margin-top: 2px;
+}
+
+input[type="checkbox"] {
+    width: 13px;
+    height: 13px;
+    padding: 0;
+    margin: 2px 0px 1px 10px;
+    vertical-align: bottom;
+    position: relative;
+    top: -1px;
+    *overflow: hidden;
+}
+
+button {
+    cursor: pointer;
+}
+
+.highlight {
+    color: #000000;
+    background-color: #ffff00;
+}
+
+#streamFilters {
+    float: left;
+    font-size: 14px;
+}
