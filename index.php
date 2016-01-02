@@ -17,7 +17,9 @@ if (isset($_GET['ajax'])) {
     echo $tail->getNewLines();
     die();
 }
+
 /**
  * Regular GET/POST call, print out the GUI
  */
+$tail->initLinesState();
 $tail->generateGUI();

@@ -44,6 +44,7 @@ class PHPTailLogs
     public function __construct($defaultUpdateTime = 2000, $maxSizeToLoad = 20971520)
     {
         $config_name = getenv('TAILLOG_CONFIGURATION');
+        
         //load config from file
         $this->setConfig((array) json_decode(file_get_contents('config/' . $config_name . '.json')));
         $this->updateTime = $defaultUpdateTime;
@@ -120,6 +121,30 @@ class PHPTailLogs
         $this->saveState();
 
         return json_encode($data);
+    }
+
+    /**
+     * Set the file pointers to the end of the log files
+     */
+    public function initLinesState()
+    {
+        foreach ($this->getConfig()['logStreams'] as $stream_name => $v) {
+            foreach ($v as $e) {
+                $this->initLineState($e);
+            }
+        }
+
+        $this->saveState();
+    }
+
+    /**
+     * Set the file pointer to the end of the log file
+     */
+    protected function initLineState($file)
+    {
+        clearstatcache();
+        $fsize = filesize($file);
+        $this->setlastFetchedSize($file, $fsize);
     }
 
     /**
