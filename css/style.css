@@ -23,7 +23,6 @@ body {
     border-bottom: 1px solid #888888; 
     padding: 10px 0 10px 0; 
     margin: 0px;  
-    height: 30px;
     width: 100%; 
     text-align: left;
     font-size: 16px;
@@ -39,7 +38,7 @@ button, input {
     color: #000000;
     font-family: 'Inconsolata', monospace;
     float: left;
-    
+    margin-right: 3px;
 }
 
 label input {
@@ -77,4 +76,9 @@ button {
 #streamFilters {
     float: left;
     font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.cb {
+    clear: both;
 }

@@ -44,7 +44,7 @@ class PHPTailLogs
     public function __construct($defaultUpdateTime = 2000, $maxSizeToLoad = 20971520)
     {
         $config_name = getenv('TAILLOG_CONFIGURATION');
-        
+
         //load config from file
         $this->setConfig((array) json_decode(file_get_contents('config/' . $config_name . '.json')));
         $this->updateTime = $defaultUpdateTime;
@@ -291,6 +291,13 @@ class PHPTailLogs
                         });
                         scrollToBottom();
 
+                        $('#grep').keypress(function (e) {
+                            var key = e.which;
+                            if (key === 13) {
+                                doGrep();
+                                return false;
+                            }
+                        })
                     });
 
                     //This function scrolls to the bottom
@@ -322,12 +329,21 @@ class PHPTailLogs
                             }
                             return;
                         }
+
+                        doGrep();
+                    }
+
+                    function doGrep() {
+                        $("#results").html('');
+                        var word = $('#grep').val();
                         searchLines = $.grep(resultLines, function (e, index) {
                             return e.line.toLowerCase().indexOf(word.toLowerCase()) >= 0;
                         });
-
                         appendLines(searchLines);
                         $("#results").highlight(word);
+                        if (scroll) {
+                            scrollToBottom();
+                        }
                     }
 
                     function appendLines(lines) {
@@ -352,7 +368,7 @@ class PHPTailLogs
 
                     function clearGrep() {
                         $('#grep').val('');
-                        doSearchLines();
+                        doGrep();
                     }
 
                     function clearLines() {
@@ -385,10 +401,12 @@ class PHPTailLogs
             <body>
                 <div class="float">
                     <input id="grep" type="text" value="" />
+                    <button onclick="doGrep();">Search</button>
                     <button onclick="clearGrep();">Empty</button>
                     <button onclick="clearLines();">Clear</button>
                     <!--<button onclick="updateLog();">Update</button>-->
                     <div id="streamFilters"></div>
+                    <div class="cb"></div>
                 </div>
                 <div id="results">
                 </div>
