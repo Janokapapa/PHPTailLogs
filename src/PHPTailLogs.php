@@ -374,8 +374,8 @@ class PHPTailLogs
                     function clearLines() {
                         resultLines = new Array();
                         $("#results").html('');
-                        streamFilterColor = new Object();
-                        streamFilterActive = new Object();
+                        //streamFilterColor = new Object();
+                        //streamFilterActive = new Object();
                     }
 
                     function showFilters() {
