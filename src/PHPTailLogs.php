@@ -245,6 +245,8 @@ class PHPTailLogs
                     var scrollPosition = 0;
                     //Should we scroll to the bottom?
                     var scroll = true;
+                    //how many lines to keep in browser
+                    var maxNumLines = 1000;
 
                     var resultLines = new Array();
                     var searchLines = new Array();
@@ -309,6 +311,20 @@ class PHPTailLogs
                     function updateLog() {
                         $.getJSON('/?ajax=1', function (data) {
                             if (data && data.length > 0) {
+                                var resultLinesNum = resultLines.length;
+                                var newLinesNum = data.length;
+                                var linesToDelete = (resultLinesNum + newLinesNum) - maxNumLines;
+                                
+                                if (linesToDelete > 0) {
+                                    if (linesToDelete > resultLinesNum) {
+                                        resultLines = new Array(); //delete all
+                                        linesToDelete = linesToDelete - resultLinesNum;
+                                        data.splice(0, linesToDelete); //delete remains from new lines from server
+                                    } else {
+                                        resultLines.splice(0,linesToDelete);
+                                    }
+                                }
+                                
                                 resultLines = resultLines.concat(data);
                                 doSearchLines();
                             }
@@ -394,6 +410,7 @@ class PHPTailLogs
                                 applyFilter();
                             });
                         });
+                        $("#streamFilters").append(' Curr rl: '+resultLines.length);
                     }
                     /* ]]> */
                 </script>
