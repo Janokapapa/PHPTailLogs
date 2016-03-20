@@ -1,16 +1,25 @@
 {
-  "nodeName": "myserver1",
-  "logStreams": {
-    "web": [
-      ".../access.log",
-      ".../error.log"
-    ],
-    "php": [
-      ".../common_php.log"
-    ],
-    "debug_log": [
-      ".../log.txt"
-    ]
-  }
+    "nodeName": "myserver1",
+    "logStreams": {
+        "web": {
+            "logFiles": [
+                ".../access.log",
+                ".../error.log"
+            ],
+            "active": true
+        },
+        "php": {
+            "logFiles": [
+                ".../common_php.log"
+            ],
+            "active": true
+        },
+        "debug_log": {
+            "logFiles": [
+                "/var/www/lv/log.txt"
+            ],
+            "active": true
+        }
+    }
 }
 

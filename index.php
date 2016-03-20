@@ -14,7 +14,23 @@ $tail = new PHPTailLogs();
  * We're getting an AJAX call
  */
 if (isset($_GET['ajax'])) {
-    echo $tail->getNewLines();
+    echo json_encode($tail->getNewLines());
+    die();
+}
+
+/**
+ * We're getting a config request call
+ */
+if (isset($_GET['get_filters'])) {
+    echo json_encode($tail->getFilters());
+    die();
+}
+
+/**
+ * We're getting a config store call
+ */
+if (isset($_GET['put_filters'])) {
+    $tail->storeFilters($_POST);
     die();
 }
 

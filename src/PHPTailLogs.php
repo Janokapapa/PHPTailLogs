@@ -46,7 +46,7 @@ class PHPTailLogs
         $config_name = getenv('TAILLOG_CONFIGURATION');
 
         //load config from file
-        $this->setConfig((array) json_decode(file_get_contents('config/' . $config_name . '.json')));
+        $this->setConfig(json_decode(file_get_contents('config/' . $config_name . '.json')));
         $this->updateTime = $defaultUpdateTime;
         $this->maxSizeToLoad = $maxSizeToLoad;
     }
@@ -70,11 +70,21 @@ class PHPTailLogs
     }
 
     /**
+     * Save current configuration to current config file
+     */
+    protected function saveConfig()
+    {
+        $config_name = getenv('TAILLOG_CONFIGURATION');
+
+        file_put_contents('config/' . $config_name . '.json', json_encode($this->getConfig(), JSON_PRETTY_PRINT));
+    }
+
+    /**
      * Load state of current position in log files
      */
     protected function loadState()
     {
-        $this->state = array();
+        $this->state = [];
         if ($state_from_file = file_get_contents('var/state.json')) {
             $this->state = (array) json_decode($state_from_file);
         }
@@ -85,7 +95,7 @@ class PHPTailLogs
      */
     protected function saveState()
     {
-        file_put_contents('var/state.json', json_encode($this->state));
+        file_put_contents('var/state.json', json_encode($this->state, JSON_PRETTY_PRINT));
     }
 
     /**
@@ -96,17 +106,17 @@ class PHPTailLogs
     {
         $this->loadState();
 
-        $data = array();
+        $data = [];
 
         $i = 0;
-        foreach ($this->getConfig()['logStreams'] as $stream_name => $v) {
-            foreach ($v as $e) {
+        foreach ($this->getConfig()->logStreams as $stream_name => $o) {
+            foreach ($o->logFiles as $e) {
                 $new_lines = $this->getNewLinesFromFile($e);
                 if (is_array($new_lines)) {
-                    $tagged_lines = array();
+                    $tagged_lines = [];
                     foreach ($new_lines as $line) {
-                        $tagged_line = array();
-                        $tagged_line['nodeName'] = $this->getConfig()['nodeName'];
+                        $tagged_line = [];
+                        $tagged_line['nodeName'] = $this->getConfig()->nodeName;
                         $tagged_line['streamName'] = $stream_name;
                         $tagged_line['color'] = $this->colors[$i % 10];
                         $tagged_line['line'] = $line;
@@ -120,7 +130,30 @@ class PHPTailLogs
 
         $this->saveState();
 
-        return json_encode($data);
+        return $data;
+    }
+
+    public function getFilters()
+    {
+        $filters = new stdClass();
+        foreach ($this->getConfig()->logStreams as $stream_name => $o) {
+            $filters->$stream_name = $o->active;
+        }
+        return $filters;
+    }
+
+    public function storeFilters($filters)
+    {
+        foreach ($this->getConfig()->logStreams as $stream_name => & $o) {
+            if (array_key_exists($stream_name, $filters)) {
+                $o->active = false;
+                if ($filters[$stream_name] === 'true') {
+                    $o->active = true;
+                }
+            }
+        }
+
+        $this->saveConfig();
     }
 
     /**
@@ -128,8 +161,8 @@ class PHPTailLogs
      */
     public function initLinesState()
     {
-        foreach ($this->getConfig()['logStreams'] as $stream_name => $v) {
-            foreach ($v as $e) {
+        foreach ($this->getConfig()->logStreams as $stream_name => $o) {
+            foreach ($o->logFiles as $e) {
                 $this->initLineState($e);
             }
         }
@@ -186,7 +219,10 @@ class PHPTailLogs
          * Define how much we should load from the log file
          * @var
          */
-        $fsize = filesize($file);
+        $fsize = 0;
+        if (file_exists($file)) {
+            $fsize = filesize($file);
+        }
         $maxLength = ($fsize - $this->getlastFetchedSize($file));
         $this->setlastFetchedSize($file, $fsize);
         /**
@@ -198,7 +234,7 @@ class PHPTailLogs
         /**
          * Actually load the data
          */
-        $data = array();
+        $data = [];
         if ($maxLength > 0) {
             $fp = fopen($file, 'r');
             fseek($fp, -$maxLength, SEEK_END);
@@ -234,185 +270,216 @@ class PHPTailLogs
                 <link rel="stylesheet" type="text/css" href="/css/style.css"></link>
 
                 <script type="text/javascript">
-                    /* <![CDATA[ */
-                    //Grep keyword
-                    var grep = "";
-                    //Should the Grep be inverted?
-                    var invert = 0;
-                    //Last known document height
-                    var documentHeight = 0;
-                    //Last known scroll position
-                    var scrollPosition = 0;
-                    //Should we scroll to the bottom?
-                    var scroll = true;
-                    //how many lines to keep in browser
-                    var maxNumLines = 1000;
+                        /* <![CDATA[ */
+                        //Grep keyword
+                        var grep = "";
+                        //Should the Grep be inverted?
+                        var invert = 0;
+                        //Last known document height
+                        var documentHeight = 0;
+                        //Last known scroll position
+                        var scrollPosition = 0;
+                        //Should we scroll to the bottom?
+                        var scroll = true;
+                        //how many lines to keep in browser
+                        var maxNumLines = 1000;
 
-                    var resultLines = new Array();
-                    var searchLines = new Array();
+                        var resultLines = new Array();
+                        var searchLines = new Array();
 
-                    var streamFilterColor = new Object();
-                    var streamFilterActive = new Object();
+                        var streamFilterColor = new Object();
+                        var streamFilterActive = new Object();
 
-                    $(document).ready(function () {
-                        //Focus on the textarea
-                        $("#grep").focus();
-                        //Set up an interval for updating the log. Change updateTime in the PHPTailLogs contstructor to change this
-                        setInterval("updateLog()", <?php echo $this->updateTime; ?>);
-                        //Some window scroll event to keep the menu at the top
-                        $(window).scroll(function (e) {
-                            if ($(window).scrollTop() > 0) {
-                                $('.float').css({
-                                    position: 'fixed',
-                                    top: '0',
-                                    left: 'auto'
-                                });
-                            } else {
-                                $('.float').css({
-                                    position: 'static'
-                                });
-                            }
+                        var config;
+
+                        $(document).ready(function () {
+                            //Focus on the textarea
+                            $("#grep").focus();
+
+                            getFilterActiveFromServer();
+
+                            //Set up an interval for updating the log. Change updateTime in the PHPTailLogs contstructor to change this
+                            setInterval("updateLog()", <?php echo $this->updateTime; ?>);
+                            //Some window scroll event to keep the menu at the top
+                            $(window).scroll(function (e) {
+                                if ($(window).scrollTop() > 0) {
+                                    $('.float').css({
+                                        position: 'fixed',
+                                        top: '0',
+                                        left: 'auto'
+                                    });
+                                } else {
+                                    $('.float').css({
+                                        position: 'static'
+                                    });
+                                }
+                            });
+
+                            //If window is resized should we scroll to the bottom?
+                            $(window).resize(function () {
+                                if (scroll) {
+                                    scrollToBottom();
+                                }
+                            });
+
+                            //Handle if the window should be scrolled down or not
+                            $(window).scroll(function () {
+                                documentHeight = $(document).height();
+                                scrollPosition = $(window).height() + $(window).scrollTop();
+                                if (documentHeight <= scrollPosition) {
+                                    scroll = true;
+                                } else {
+                                    scroll = false;
+                                }
+                            });
+                            scrollToBottom();
+
+                            $('#grep').keypress(function (e) {
+                                var key = e.which;
+                                if (key === 13) {
+                                    doGrep();
+                                    return false;
+                                }
+                            })
                         });
 
-                        //If window is resized should we scroll to the bottom?
-                        $(window).resize(function () {
+                        //This function scrolls to the bottom
+                        function scrollToBottom() {
+                            $("html, body").scrollTop($(document).height());
+                        }
+
+                        //This function queries the server for updates.
+                        function updateLog() {
+                            $.getJSON('/?ajax=1', function (data) {
+                                if (data && data.length > 0) {
+                                    var resultLinesNum = resultLines.length;
+                                    var newLinesNum = data.length;
+                                    var linesToDelete = (resultLinesNum + newLinesNum) - maxNumLines;
+
+                                    if (linesToDelete < 0) {
+                                        linesToDelete = 0;
+                                    }
+
+                                    if (linesToDelete > 0) {
+                                        if (linesToDelete > resultLinesNum) {
+                                            resultLines = new Array(); //delete all
+                                            linesToDelete = linesToDelete - resultLinesNum;
+                                            data.splice(0, linesToDelete); //delete remains from new lines from server
+                                            $("#results").html('');
+                                        } else {
+                                            $("#results").find('.result_line:lt(' + linesToDelete + ')').remove();
+                                            resultLines.splice(0, linesToDelete);
+                                        }
+                                    }
+
+                                    resultLines = resultLines.concat(data);
+                                    doSearchLines(newLinesNum);
+                                }
+                            });
+                        }
+
+                        function getFilterActiveFromServer() {
+                            $.getJSON('/?get_filters=1', function (data) {
+                                if (data) {
+                                    streamFilterActive = data;
+                                }
+                            });
+                        }
+
+                        function putFilterActiveToServer() {
+                            $.post("/?put_filters=1", streamFilterActive);
+                        }
+
+                        function getFilterActive(node_name) {
+                            console.log(config.node_name);
+                        }
+
+                        function isEmpty(str) {
+                            return (!str || 0 === str.length);
+                        }
+
+                        function doSearchLines(newLinesNum) {
+                            var word = $('#grep').val();
+                            if (isEmpty(word)) {
+                                appendLines(resultLines, newLinesNum);
+                                searchLines = '';
+                                if (scroll) {
+                                    scrollToBottom();
+                                }
+                                return;
+                            }
+
+                            doGrep();
+                        }
+
+                        function doGrep() {
+                            $("#results").html('');
+                            var word = $('#grep').val();
+                            searchLines = $.grep(resultLines, function (e, index) {
+                                return e.line.toLowerCase().indexOf(word.toLowerCase()) >= 0;
+                            });
+                            appendLines(searchLines, 0); //append all lines
+                            $("#results").highlight(word);
                             if (scroll) {
                                 scrollToBottom();
                             }
-                        });
+                        }
 
-                        //Handle if the window should be scrolled down or not
-                        $(window).scroll(function () {
-                            documentHeight = $(document).height();
-                            scrollPosition = $(window).height() + $(window).scrollTop();
-                            if (documentHeight <= scrollPosition) {
-                                scroll = true;
+                        function appendLines(lines, newLinesNum) {
+                            if (newLinesNum > 0) {
+                                linesNum = lines.length;
+                                newLines = lines.slice(linesNum - newLinesNum, linesNum);
                             } else {
-                                scroll = false;
+                                newLines = lines;
                             }
-                        });
-                        scrollToBottom();
-
-                        $('#grep').keypress(function (e) {
-                            var key = e.which;
-                            if (key === 13) {
-                                doGrep();
-                                return false;
-                            }
-                        })
-                    });
-
-                    //This function scrolls to the bottom
-                    function scrollToBottom() {
-                        $("html, body").scrollTop($(document).height());
-                    }
-
-                    //This function queries the server for updates.
-                    function updateLog() {
-                        $.getJSON('/?ajax=1', function (data) {
-                            if (data && data.length > 0) {
-                                var resultLinesNum = resultLines.length;
-                                var newLinesNum = data.length;
-                                var linesToDelete = (resultLinesNum + newLinesNum) - maxNumLines;
-                                
-                                if (linesToDelete > 0) {
-                                    if (linesToDelete > resultLinesNum) {
-                                        resultLines = new Array(); //delete all
-                                        linesToDelete = linesToDelete - resultLinesNum;
-                                        data.splice(0, linesToDelete); //delete remains from new lines from server
-                                    } else {
-                                        resultLines.splice(0,linesToDelete);
+                            $.each(newLines, function (key, node) {
+                                if (node.line) {
+                                    streamFilterColor[node.streamName] = node.color;
+                                    if (streamFilterActive[node.streamName] === undefined || streamFilterActive[node.streamName] === null) {
+                                        streamFilterActive[node.streamName] = true;
+                                    }
+                                    if (streamFilterActive[node.streamName]) {//only active streams
+                                        $("#results").append('<div class="result_line"><span style="color: #eeeeee;">' + node.nodeName + '</span> <span style="color: ' + node.color + '"> ' + node.streamName + '</span> ' + node.line + '</div>');
                                     }
                                 }
-                                
-                                resultLines = resultLines.concat(data);
-                                doSearchLines();
-                            }
-                        });
-                    }
-
-                    function isEmpty(str) {
-                        return (!str || 0 === str.length);
-                    }
-
-                    function doSearchLines() {
-                        var word = $('#grep').val();
-                        if (isEmpty(word)) {
-                            appendLines(resultLines);
-                            searchLines = '';
-                            if (scroll) {
-                                scrollToBottom();
-                            }
-                            return;
-                        }
-
-                        doGrep();
-                    }
-
-                    function doGrep() {
-                        $("#results").html('');
-                        var word = $('#grep').val();
-                        searchLines = $.grep(resultLines, function (e, index) {
-                            return e.line.toLowerCase().indexOf(word.toLowerCase()) >= 0;
-                        });
-                        appendLines(searchLines);
-                        $("#results").highlight(word);
-                        if (scroll) {
-                            scrollToBottom();
-                        }
-                    }
-
-                    function appendLines(lines) {
-                        $.each(lines, function (key, node) {
-                            if (node.line) {
-                                streamFilterColor[node.streamName] = node.color;
-                                if (streamFilterActive[node.streamName] === undefined || streamFilterActive[node.streamName] === null) {
-                                    streamFilterActive[node.streamName] = true;
-                                }
-                                if (streamFilterActive[node.streamName]) {//only active streams
-                                    $("#results").append('<span style="color: #eeeeee;">' + node.nodeName + '</span> <span style="color: ' + node.color + '"> ' + node.streamName + '</span> ' + node.line + '<br/>');
-                                }
-                            }
-                        });
-                        showFilters();
-                    }
-
-                    function applyFilter() {
-                        $("#results").html('');
-                        doSearchLines();
-                    }
-
-                    function clearGrep() {
-                        $('#grep').val('');
-                        doGrep();
-                    }
-
-                    function clearLines() {
-                        resultLines = new Array();
-                        $("#results").html('');
-                        //streamFilterColor = new Object();
-                        //streamFilterActive = new Object();
-                    }
-
-                    function showFilters() {
-                        $("#streamFilters").html('');
-                        $.each(streamFilterColor, function (streamName, color) {
-                            var filterId = "filter_" + streamName;
-                            $("#streamFilters").append(' <label style="color: ' + color + '"><input type="checkbox" id="' + filterId + '" value="xxx"> ' + streamName + '</label> ');
-
-                            $('#' + filterId).prop('checked', false);
-                            if (streamFilterActive[streamName]) {
-                                $('#' + filterId).prop('checked', true);
-                            }
-
-                            $('#' + filterId).change(function () {
-                                streamFilterActive[streamName] = $('#' + filterId).prop('checked');
-                                applyFilter();
                             });
-                        });
-                        $("#streamFilters").append(' Curr rl: '+resultLines.length);
-                    }
-                    /* ]]> */
+                            showFilters();
+                        }
+
+                        function applyFilter() {
+                            $("#results").html('');
+                            doSearchLines();
+                        }
+
+                        function clearGrep() {
+                            $('#grep').val('');
+                            doGrep();
+                        }
+
+                        function clearLines() {
+                            resultLines = new Array();
+                            $("#results").html('');
+                        }
+
+                        function showFilters() {
+                            $("#streamFilters").html('');
+                            $.each(streamFilterColor, function (streamName, color) {
+                                var filterId = "filter_" + streamName;
+                                $("#streamFilters").append(' <label style="color: ' + color + '"><input type="checkbox" id="' + filterId + '" value="xxx"> ' + streamName + '</label> ');
+
+                                $('#' + filterId).prop('checked', false);
+                                if (streamFilterActive[streamName]) {
+                                    $('#' + filterId).prop('checked', true);
+                                }
+
+                                $('#' + filterId).change(function () {
+                                    streamFilterActive[streamName] = $('#' + filterId).prop('checked');
+                                    applyFilter();
+                                    putFilterActiveToServer();
+                                });
+                            });
+                        }
+                        /* ]]> */
                 </script>
             </head>
             <body>
