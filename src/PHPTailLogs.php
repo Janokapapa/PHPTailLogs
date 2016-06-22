@@ -282,15 +282,19 @@ class PHPTailLogs
                         //Should we scroll to the bottom?
                         var scroll = true;
                         //how many lines to keep in browser
-                        var maxNumLines = 1000;
+                        var maxNumLines = 10000;
 
                         var resultLines = new Array();
                         var searchLines = new Array();
+                        var errorLines = new Array();
 
                         var streamFilterColor = new Object();
                         var streamFilterActive = new Object();
 
                         var config;
+
+                        //words activate red line error mark
+                        var error_strings = new Array('exception', 'FATAL', 'ERROR');
 
                         $(document).ready(function () {
                             //Focus on the textarea
@@ -300,20 +304,6 @@ class PHPTailLogs
 
                             //Set up an interval for updating the log. Change updateTime in the PHPTailLogs contstructor to change this
                             setInterval("updateLog()", <?php echo $this->updateTime; ?>);
-                            //Some window scroll event to keep the menu at the top
-                            $(window).scroll(function (e) {
-                                if ($(window).scrollTop() > 0) {
-                                    $('.float').css({
-                                        position: 'fixed',
-                                        top: '0',
-                                        left: 'auto'
-                                    });
-                                } else {
-                                    $('.float').css({
-                                        position: 'static'
-                                    });
-                                }
-                            });
 
                             //If window is resized should we scroll to the bottom?
                             $(window).resize(function () {
@@ -432,6 +422,10 @@ class PHPTailLogs
                             } else {
                                 newLines = lines;
                             }
+
+                            var lineCounter = linesNum;
+                            var errorBefore = false;
+
                             $.each(newLines, function (key, node) {
                                 if (node.line) {
                                     streamFilterColor[node.streamName] = node.color;
@@ -439,11 +433,35 @@ class PHPTailLogs
                                         streamFilterActive[node.streamName] = true;
                                     }
                                     if (streamFilterActive[node.streamName]) {//only active streams
-                                        $("#results").append('<div class="result_line"><span style="color: #eeeeee;">' + node.nodeName + '</span> <span style="color: ' + node.color + '"> ' + node.streamName + '</span> ' + node.line + '</div>');
+                                        //check for lines with errors
+                                        lineClass = 'result_line';
+                                        bookMark = lineCounter;
+
+                                        if (new RegExp(error_strings.join("|")).test(node.line) || errorBefore) {
+                                            lineClass = 'result_line_error';
+                                        }
+                                        
+                                        if (new RegExp(error_strings.join("|")).test(node.line)) {
+                                            bookMark = '<span id="' + lineCounter + '">' + lineCounter + '</span>';
+                                            if (errorLines[errorLines.length-1] + 1 < lineCounter || errorLines.length === 0) {
+                                                errorLines.push(lineCounter);
+                                            }
+                                            errorBefore = true; //keep red error lines until it disengaged
+                                        } else if (errorBefore && !(node.line.indexOf('#') > -1 || node.line.indexOf('Stack trace') > -1)) {//disengage error lines
+                                            errorBefore = false;
+                                            lineClass = 'result_line';
+                                        }
+
+                                        //append lines
+                                        $("#results").append('<div class="' + lineClass + '"><span style="color: #eeeeee;">' + bookMark + ' ' + node.nodeName + '</span> <span style="color: ' + node.color + '"> ' + node.streamName + '</span> ' + node.line + '</div>');
                                     }
+
+                                    lineCounter++;
                                 }
                             });
+
                             showFilters();
+                            showExceptionResults();
                         }
 
                         function applyFilter() {
@@ -459,6 +477,7 @@ class PHPTailLogs
                         function clearLines() {
                             resultLines = new Array();
                             $("#results").html('');
+                            errorLines = new Array();
                         }
 
                         function showFilters() {
@@ -479,6 +498,15 @@ class PHPTailLogs
                                 });
                             });
                         }
+
+                        function showExceptionResults() {
+                            var errorBookMarks = 'Errors in lines: ';
+                            $.each(errorLines, function (key, node) {
+                                errorBookMarks += ' <a href="#' + node + '">' + node + '<a>';
+                            });
+                            $('#errorBookMarks').html(errorBookMarks);
+                        }
+
                         /* ]]> */
                 </script>
             </head>
@@ -491,7 +519,9 @@ class PHPTailLogs
                     <!--<button onclick="updateLog();">Update</button>-->
                     <div id="streamFilters"></div>
                     <div class="cb"></div>
+                    <div id="errorBookMarks"></div>
                 </div>
+                <div class="cb"></div>
                 <div id="results">
                 </div>
             </body>
