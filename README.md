@@ -6,6 +6,8 @@ Simple php logs tail in the browser. Inspired by log.io and based on https://cod
 - handle any number of logs
 - basic search functionality in lines
 - filter log streams
+- highlight errors/exceptions (configurable words)
+- also bookmark errors/exceptions and jump to the lines on click
 
 **Example apache config:**
 
