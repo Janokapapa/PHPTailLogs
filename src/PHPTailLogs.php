@@ -122,9 +122,9 @@ class PHPTailLogs {
                 }
             }
 
-            if ($o->mysql_host) {
-                $db = new DB($o->mysql_host, $o->mysql_db, $o->mysql_user, $o->mysql_pass, 'UTF8');
-                
+            if ($o->mysql_host && $o->active) {
+                $db = new DB($o->mysql_host, $o->mysql_port, $o->mysql_db, $o->mysql_user, $o->mysql_pass, 'UTF8', false);
+
                 $new_lines = $this->getNewLinesFromDB($db, $o->mysql_host . ':' . $o->mysql_db);
                 if (is_array($new_lines)) {
                     $tagged_lines = [];
@@ -173,8 +173,10 @@ class PHPTailLogs {
      */
     public function initLinesState() {
         foreach ($this->getConfig()->logStreams as $stream_name => $o) {
-            foreach ($o->logFiles as $e) {
-                $this->initLineState($e);
+            if ($o->logFiles) {
+                foreach ($o->logFiles as $e) {
+                    $this->initLineState($e);
+                }
             }
         }
 
@@ -268,24 +270,30 @@ class PHPTailLogs {
      */
     protected function getNewLinesFromDB($db, $db_name) {
         $last_id = $this->getlastFetchedSize($db_name);
-        
-        $last_row_id = $db->run("SELECT id FROM log WHERE id = :last_id ORDER BY id", array('last_id' => $last_id))->fetchColumn();
+
+        try {
+            $last_row_id = $db->run("SELECT id FROM log WHERE id = :last_id ORDER BY id", array('last_id' => $last_id))->fetchColumn();
+        } catch (PDOException $e) {
+            error_log($e->getMessage());
+            return;
+        }
+
         if (!$last_row_id) {//table emptied
             $last_id = 0;
         }
-        
-        $rows = $db->run("SELECT * FROM log WHERE id > :last_id ORDER BY id", array('last_id' => $last_id))->fetchAll();
-        
+
+        $rows = $db->run("SELECT * FROM log WHERE id > :last_id ORDER BY id LIMIT 1000", array('last_id' => $last_id))->fetchAll();
+
         if (count($rows) === 0) {
             return;
         }
-        
+
         $data = array();
         foreach ($rows as $r) {
-            $data[] = $r['id'].':'.$r['source'].':'.$r['message'];
+            $data[] = $r['log_time'] . '|' . $r['session_id'] . '|' . $r['source'] . '|' . $r['message'];
             $id = $r['id'];
         }
-        
+
         $this->setlastFetchedSize($db_name, $id);
 
         return $data;

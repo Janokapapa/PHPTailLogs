@@ -8,9 +8,11 @@ class DB {
     protected $db_user;
     protected $db_pass;
     protected $db_char;
+    protected $db_port;
 
-    public function __construct($db_host, $db_name, $db_user, $db_pass, $db_char, $debug = false) {
+    public function __construct($db_host, $db_port, $db_name, $db_user, $db_pass, $db_char, $debug = false) {
         $this->db_host = $db_host;
+        $this->db_port = $db_port;
         $this->db_name = $db_name;
         $this->db_user = $db_user;
         $this->db_pass = $db_pass;
@@ -29,7 +31,7 @@ class DB {
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => FALSE,
             );
-            $dsn = 'mysql:host=' . $this->db_host . ';dbname=' . $this->db_name . ';charset=' . $this->db_char;
+            $dsn = 'mysql:host=' . $this->db_host . ';port=' . $this->db_port . ';dbname=' . $this->db_name . ';charset=' . $this->db_char;
             if ($this->debug) {
                 $this->instance = new LoggedPDO($dsn, $this->db_user, $this->db_pass, $opt);
             } else {
@@ -135,7 +137,7 @@ class LoggedPDOStatement {
 
     public function _debugQuery($replaced = true) {
         $q = $this->statement->queryString;
-        
+
         if (!$replaced) {
             return $q;
         }
@@ -144,7 +146,7 @@ class LoggedPDOStatement {
     }
 
     protected function _debugReplace($m) {
-        $name = str_replace(':','',$m[0]);
+        $name = str_replace(':', '', $m[0]);
         $v = $this->_debugValues[$name];
 
         if ($v === null) {
