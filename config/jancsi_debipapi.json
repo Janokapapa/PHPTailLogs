@@ -1,0 +1,71 @@
+{
+    "nodeName": "debipapi",
+    "logStreams": {
+        "dcashier_as_web": {
+            "logFiles": [
+                "\/var\/www\/dcashier-as\/webserver-log\/access.log",
+                "\/var\/www\/dcashier-as\/webserver-log\/error.log"
+            ],
+            "active": false
+        },
+        "dcashier_ws_web": {
+            "logFiles": [
+                "\/var\/www\/dcashier-ws\/webserver-log\/access.log",
+                "\/var\/www\/dcashier-ws\/webserver-log\/error.log"
+            ],
+            "active": false
+        },
+        "guzzle": {
+            "logFiles": [
+                "\/var\/www\/dcashier-ws\/log\/guzzle_history_log.txt"
+            ],
+            "active": false
+        },
+        "oauth2": {
+            "logFiles": [
+                "\/var\/www\/dcashier-ws\/log\/oauth2_history_log.txt"
+            ],
+            "active": true
+        },
+        "php": {
+            "logFiles": [
+                "\/var\/www\/common_php.log"
+            ],
+            "active": true
+        },
+        "debug_as": {
+            "logFiles": [
+                "\/var\/www\/dcashier-as\/log.txt"
+            ],
+            "active": true
+        },
+        "debug_ws": {
+            "logFiles": [
+                "\/var\/www\/dcashier-ws\/log.txt"
+            ],
+            "active": false
+        },
+        "debug_ppa": {
+            "logFiles": [
+                "\/var\/www\/dcashier-ppa\/app\/log\/debug-2017-01-16.log"
+            ],
+            "active": true
+        },
+        "tc": {
+            "mysql_host": "127.0.0.1",
+            "mysql_port": "3306",
+            "mysql_db": "tradingcompass",
+            "mysql_user": "root",
+            "mysql_pass": "root",
+            "active": false
+        },
+        "tc-live": {
+            "mysql_host": "10.0.3.2",
+            "mysql_port": "53001",
+            "mysql_db": "tradingcompass",
+            "mysql_user": "root",
+            "mysql_pass": "",
+            "active": false
+        }
+    }
+}
