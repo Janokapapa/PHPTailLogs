@@ -234,6 +234,8 @@ class PHPTailLogs {
         $fsize = 0;
         if (file_exists($file)) {
             $fsize = filesize($file);
+        } else {
+            return array('Error: Config input file doesnt exists: '.$file);
         }
         $maxLength = ($fsize - $this->getlastFetchedSize($file));
         $this->setlastFetchedSize($file, $fsize);
