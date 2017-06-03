@@ -103,7 +103,7 @@ class PHPTailLogs {
 
         $i = 0;
         foreach ($this->getConfig()->logStreams as $stream_name => $o) {
-            if ($o->logFiles) {
+            if ($o->logFiles && $o->active) {
                 foreach ($o->logFiles as $e) {
                     $new_lines = $this->getNewLinesFromFile($e);
                     if (is_array($new_lines)) {
