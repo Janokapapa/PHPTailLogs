@@ -235,7 +235,7 @@ class PHPTailLogs {
         if (file_exists($file)) {
             $fsize = filesize($file);
         } else {
-            return array('Error: Config input file doesnt exists: '.$file);
+            return array('Error: Config input file doesnt exists: ' . $file);
         }
         $maxLength = ($fsize - $this->getlastFetchedSize($file));
         $this->setlastFetchedSize($file, $fsize);
@@ -292,7 +292,7 @@ class PHPTailLogs {
 
         $data = array();
         foreach ($rows as $r) {
-            $data[] = $r['log_time'] . '|' . $r['session_id'] . '|' . $r['source'] . '|' . $r['message'];
+            $data[] = $r['log_time'] . '|' . $r['session_id'] . '|' . $r['source'] . '|' . $r['message'] . " data=" . $r['raw'];
             $id = $r['id'];
         }
 
