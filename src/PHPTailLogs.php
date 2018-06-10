@@ -45,7 +45,9 @@ class PHPTailLogs {
         $config_name = getenv('TAILLOG_CONFIGURATION');
 
         //load config from file
-        $this->setConfig(json_decode(file_get_contents('config/' . $config_name . '.json')));
+        $config_file ='config/' . $config_name . '.json';
+        $config = json_decode(file_get_contents($config_file));
+        $this->setConfig($config);
         $this->updateTime = $defaultUpdateTime;
         $this->maxSizeToLoad = $maxSizeToLoad;
     }
