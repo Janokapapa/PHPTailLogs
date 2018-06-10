@@ -1,6 +1,5 @@
 nbproject/
 webserver-log/
 *.log
-/config/jancsi_debipapi.json
-/config/tibi_virtualbox.json
+/config/*.json
 .idea/

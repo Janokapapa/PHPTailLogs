@@ -124,7 +124,7 @@ class PHPTailLogs {
                 }
             }
 
-            if ($o->mysql_host && $o->active) {
+            if (property_exists($o, 'mysql_host') && $o->mysql_host && $o->active) {
                 $db = new DB($o->mysql_host, $o->mysql_port, $o->mysql_db, $o->mysql_user, $o->mysql_pass, 'UTF8', false);
 
                 $new_lines = $this->getNewLinesFromDB($db, $o->mysql_host . ':' . $o->mysql_db);
