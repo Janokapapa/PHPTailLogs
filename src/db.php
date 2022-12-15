@@ -72,8 +72,8 @@ class LoggedPDO extends PDO {
         parent::__construct($dsn, $username, $password, $options);
     }
 
-    public function query($query) {
-        $result = parent::query($query);
+    public function query($statement, $mode = PDO::ATTR_DEFAULT_FETCH_MODE, ...$fetch_mode_args) {
+        $result = parent::query($statement, $model, $arg3, $ctorargs);
         return $result;
     }
 
