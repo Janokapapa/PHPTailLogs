@@ -47,21 +47,23 @@ class PHPTailLogs
         $config_name = getenv('TAILLOG_CONFIGURATION');
 
         if (empty($config_name)) {
-            error_log('taillog error: no config name');
+            echo 'taillog error: no config name';
         }
 
         //load config from file
         $config_file = 'config/' . $config_name . '.json';
 
         if (!file_exists($config_file)) {
-            error_log('taillog error: file doesnt exists: ' . $config_file);
+            echo 'taillog error: file doesnt exists: ' . $config_file;
+        } else {
+            echo 'loaded config: ' . $config_file;
         }
 
         $raw_config = file_get_contents($config_file);
         $config = json_decode($raw_config);
 
         if (empty($config)) {
-            error_log('taillog error: no valid config in file: ' . $raw_config);
+            echo 'taillog error: no valid config in file: ' . $raw_config;
         }
 
         $this->setConfig($config);
