@@ -36,6 +36,9 @@ class PHPTailLogs
      */
     private $state;
 
+    private $err;
+    private $info;
+
     /**
      *
      * PHPTailLogs constructor
@@ -46,24 +49,25 @@ class PHPTailLogs
     {
         $config_name = getenv('TAILLOG_CONFIGURATION');
 
+        $this->err = '';
         if (empty($config_name)) {
-            echo 'taillog error: no config name';
+            $this->err = 'no config name';
         }
 
         //load config from file
         $config_file = 'config/' . $config_name . '.json';
 
         if (!file_exists($config_file)) {
-            echo 'taillog error: file doesnt exists: ' . $config_file;
+            $this->err.= ' file doesnt exists: ' . $config_file;
         } else {
-            echo 'loaded config: ' . $config_file;
+            $this->info =  'loaded config: ' . $config_file;
         }
 
         $raw_config = file_get_contents($config_file);
         $config = json_decode($raw_config);
 
         if (empty($config)) {
-            echo 'taillog error: no valid config in file: ' . $raw_config;
+            $this->err .= ' no valid config in file: ' . $raw_config;
         }
 
         $this->setConfig($config);
@@ -610,6 +614,7 @@ class PHPTailLogs
             <div id="streamFilters"></div>
             <div class="cb"></div>
             <div id="errorBookMarks"></div>
+            <div id="info"><?= $this->err.$this->info ?><div>
         </div>
         <div class="cb"></div>
         <div id="results">
